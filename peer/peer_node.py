@@ -318,3 +318,72 @@ class PeerNode:
                     s.close()
                 except Exception:
                     pass  # silently skip unreachable peers
+                  # ==========================================================
+    # FILE SHARING  —  implemented by PANDYA HARSHIDA
+    # Direct peer-to-peer file notification. No central server.
+    # ==========================================================
+    def share_file_with(self, host: str, port: int, filename: str) -> dict:
+        """
+        Notify another peer directly that we have a file available.
+        Opens a direct TCP connection to the target peer — no coordinator.
+        """
+        try:
+            s = self._connect(host, port)
+            send_msg(s, {
+                "type":      "FILE_SHARE",
+                "sender_id": self.peer_id,
+                "filename":  filename
+            })
+            resp = recv_msg(s)
+            s.close()
+            return resp
+        except Exception as e:
+            self.log.warning(f"File share to {host}:{port} failed: {e}")
+            return {}
+
+    # ==========================================================
+    # JOIN / LEAVE  —  implemented by PANDYA HARSHIDA
+    # ==========================================================
+    def announce_join(self):
+        """
+        Broadcast our arrival to all known peers.
+        Each peer adds us to their known_peers list.
+        Called automatically on startup.
+        """
+        msg = {
+            "type":    "JOIN_ANNOUNCE",
+            "peer_id": self.peer_id,
+            "host":    self.host,
+            "port":    self.port
+        }
+        for (h, p) in list(self.known_peers):
+            try:
+                s = self._connect(h, p)
+                send_msg(s, msg)
+                recv_msg(s)
+                s.close()
+                self.log.info(f"Announced join to {h}:{p}")
+            except Exception as e:
+                self.log.debug(f"Join announce to {h}:{p} failed: {e}")
+
+    def announce_leave(self):
+        """
+        Notify all known peers that we are shutting down.
+        Each peer removes us from their known_peers list.
+        Called automatically on Ctrl+C (via stop()).
+        """
+        msg = {
+            "type":    "LEAVE_ANNOUNCE",
+            "peer_id": self.peer_id,
+            "host":    self.host,
+            "port":    self.port
+        }
+        for (h, p) in list(self.known_peers):
+            try:
+                s = self._connect(h, p)
+                send_msg(s, msg)
+                recv_msg(s)
+                s.close()
+                self.log.info(f"Leave announced to {h}:{p}")
+            except Exception:
+                pass  # peer may already be down — that's fine
