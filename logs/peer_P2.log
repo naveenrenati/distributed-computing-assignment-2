@@ -1,0 +1,14 @@
+2026-11-08 23:11:34,531 [Peer-P2] INFO: Peer P2 initialising on 127.0.0.1:7002
+2026-11-08 23:11:34,531 [Peer-P2] INFO: Peer P2 listening on 127.0.0.1:7002
+2026-11-08 23:11:35,232 [Peer-P2] INFO: New peer joined: P1 @ 127.0.0.1:7001
+2026-11-08 23:11:35,538 [Peer-P2] INFO: Announced join to 127.0.0.1:7001
+2026-11-08 23:11:35,539 [Peer-P2] INFO: Announced join to 127.0.0.1:7003
+2026-11-08 23:11:35,540 [Peer-P2] INFO: Announced join to 127.0.0.1:7004
+2026-11-08 23:11:35,850 [Peer-P2] INFO: New peer joined: P3 @ 127.0.0.1:7003
+2026-11-08 23:11:36,156 [Peer-P2] INFO: New peer joined: P4 @ 127.0.0.1:7004
+2026-11-08 23:11:37,398 [Peer-P2] INFO: Resource request from peer P1
+/private/tmp/DC-clone/peer/peer_node.py:230: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "timestamp": datetime.utcnow().isoformat(),
+2026-11-08 23:11:37,408 [Peer-P2] INFO: Peer P1 shared file 'dataset_P1.csv' with us
+2026-11-08 23:11:37,450 [Peer-P2] INFO: Peer P4 is leaving the network
+2026-11-08 23:11:37,450 [Peer-P2] INFO: Resource request from peer P1

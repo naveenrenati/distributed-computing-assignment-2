@@ -1,0 +1,13 @@
+2026-11-08 23:11:32,606 [Worker-W2] INFO: Worker W2 initialising on 127.0.0.1:6002
+2026-11-08 23:11:32,606 [Worker-W2] INFO: Registered with master successfully
+2026-11-08 23:11:32,606 [Worker-W2] INFO: Worker W2 listening on 127.0.0.1:6002
+2026-11-08 23:11:32,848 [Worker-W2] INFO: Executing sub-task ? | type=None | data={}
+2026-11-08 23:11:32,849 [Worker-W2] INFO: Sub-task ? done in 9e-06s | {'echo': {}, 'status': 'ok', 'worker_id': 'W2', 'elapsed_seconds': 9e-06}
+2026-11-08 23:11:37,413 [Worker-W2] INFO: Executing sub-task T000001 | type=prime_count | data={'low': 166667, 'high': 333332}
+2026-11-08 23:11:37,438 [Worker-W2] INFO: Sub-task T000001 done in 0.024867s | {'count': 13440, 'range': '166667-333332', 'status': 'ok', 'worker_id': 'W2', 'elapsed_seconds': 0.024867}
+2026-11-08 23:11:37,447 [Worker-W2] INFO: Executing sub-task T000002 | type=sum_squares | data={'low': 333334, 'high': 666666}
+2026-11-08 23:11:37,447 [Worker-W2] INFO: Sub-task T000002 done in 8e-06s | {'sum': 86419660493808642, 'range': '333334-666666', 'status': 'ok', 'worker_id': 'W2', 'elapsed_seconds': 8e-06}
+2026-11-08 23:11:37,449 [Worker-W2] INFO: Executing sub-task T000003 | type=word_count | data={'words': ['communication', 'without', 'central', 'coordinator', 'cluster', 'computing', 'provides', 'parallel', 'processing', 'for', 'intensive', 'tasks', 'distributed', 'computing']}
+2026-11-08 23:11:37,449 [Worker-W2] INFO: Sub-task T000003 done in 9e-06s | {'freq': {'communication': 1, 'without': 1, 'central': 1, 'coordinator': 1, 'cluster': 1, 'computing': 2, 'provides': 1, 'parallel': 1, 'processing': 1, 'for': 1, 'intensive': 1, 'tasks': 1, 'distributed': 1}, 'word_count': 14, 'status': 'ok', 'worker_id': 'W2', 'elapsed_seconds': 9e-06}
+2026-11-08 23:11:38,762 [Worker-W2] INFO: Executing sub-task T000004 | type=prime_count | data={'low': 250001, 'high': 500000}
+2026-11-08 23:11:38,806 [Worker-W2] INFO: Sub-task T000004 done in 0.044023s | {'count': 19494, 'range': '250001-500000', 'status': 'ok', 'worker_id': 'W2', 'elapsed_seconds': 0.044023}
