@@ -387,3 +387,142 @@ class PeerNode:
                 self.log.info(f"Leave announced to {h}:{p}")
             except Exception:
                 pass  # peer may already be down — that's fine
+
+    # ==========================================================
+    # RESOURCE QUERY  —  direct P2P, no coordinator
+    # ==========================================================
+    def request_resources_from(self, host: str, port: int) -> dict:
+        """Ask another peer directly for its CPU%, memory%, files."""
+        try:
+            s = self._connect(host, port)
+            send_msg(s, {"type": "RESOURCE_REQUEST", "sender_id": self.peer_id})
+            resp = recv_msg(s)
+            s.close()
+            return resp
+        except Exception as e:
+            self.log.warning(f"Could not reach {host}:{port}: {e}")
+            return {}
+
+    # ==========================================================
+    # CLUSTER BRIDGE  —  implemented by KAWALEKAR NEHAL
+    # This is the ONLY place where P2P and cluster worlds meet.
+    # A peer submits a heavy task to the cluster master here.
+    # ==========================================================
+    def submit_cluster_task(self, task_type: str, data: dict) -> dict:
+        """
+        Submit a compute task to the cluster master.
+
+        The master will:
+          1. Split the task across all workers
+          2. Run sub-tasks in parallel
+          3. Merge results
+          4. Return the final answer here
+
+        This method blocks until the answer is ready.
+        """
+        try:
+            s = self._connect(*self.master_addr)
+            send_msg(s, {
+                "type":      "TASK_SUBMIT",
+                "requester": self.peer_id,
+                "task_type": task_type,
+                "data":      data,
+            })
+            result = recv_msg(s)
+            s.close()
+            self.resource_table.increment_tasks()  # track that we used the cluster
+            self.log.info(f"Cluster task result: {result}")
+            return result
+        except Exception as e:
+            self.log.error(f"Cluster submit failed: {e}")
+            return {"status": "error", "detail": str(e)}
+
+    # ---------------------------------------------------------
+    # LIFECYCLE — start/stop the peer
+    # ---------------------------------------------------------
+    def run(self):
+        """Start server and gossip threads, then announce join."""
+        # Thread 1: listen for incoming peer connections
+        threading.Thread(target=self.start_server, daemon=True).start()
+        # Thread 2: periodically push our resources to all peers
+        threading.Thread(target=self.gossip_resources, daemon=True).start()
+        time.sleep(1)
+        self.announce_join()  # tell all known peers we have joined
+        return self
+
+    def stop(self):
+        """Announce leave to all peers, then shut down."""
+        self.log.info(f"Peer {self.peer_id} shutting down")
+        self.announce_leave()
+        self._running = False
+
+    def poll_all_peers(self):
+        """Query and print resource status from all known peers."""
+        self.log.info("=== Polling all known peers for resources ===")
+        for (h, p) in list(self.known_peers):
+            resp = self.request_resources_from(h, p)
+            if resp:
+                pid = resp.get("sender_id", f"{h}:{p}")
+                res = resp.get("resources", {})
+                with self._lock:
+                    self.peer_resources[pid] = res
+                self.log.info(
+                    f"  {pid}: CPU={res.get('cpu_percent')}%  "
+                    f"MEM={res.get('mem_percent')}%"
+                )
+
+
+# =============================================================
+# HELPER — parse comma-separated peer list from CLI
+# =============================================================
+def parse_peer_list(raw: str) -> list:
+    peers = []
+    if not raw:
+        return peers
+    for token in raw.split(","):
+        token = token.strip()
+        if ":" in token:
+            h, p = token.rsplit(":", 1)
+            peers.append((h, int(p)))
+    return peers
+
+
+# =============================================================
+# ENTRY POINT
+# =============================================================
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description="P2P Peer Node")
+    ap.add_argument("--id",     required=True,  help="Unique peer ID e.g. P1")
+    ap.add_argument("--host",   default="127.0.0.1", help="IP to bind on")
+    ap.add_argument("--port",   type=int, required=True, help="Port to listen on")
+    ap.add_argument("--peers",  default="",
+                    help="Comma-separated list of other peers as host:port")
+    ap.add_argument("--master", default="127.0.0.1:6000",
+                    help="Cluster master address as host:port")
+    ap.add_argument("--demo",   action="store_true",
+                    help="Run a short automated demo sequence then exit")
+    args = ap.parse_args()
+
+    known      = parse_peer_list(args.peers)
+    mh, mp     = args.master.rsplit(":", 1)
+    master_addr = (mh, int(mp))
+
+    node = PeerNode(args.id, args.host, args.port, known, master_addr)
+    node.run()
+
+    if args.demo:
+        time.sleep(3)
+        node.poll_all_peers()
+        if known:
+            h, p = known[0]
+            node.share_file_with(h, p, f"data_{args.id}.csv")
+        result = node.submit_cluster_task("prime_count", {"limit": 100_000})
+        node.log.info(f"Cluster task result: {result}")
+        time.sleep(5)
+        node.stop()
+    else:
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            node.stop()
